@@ -12,10 +12,6 @@ SYSTEM_THREAD(ENABLED);
 #define closePin D6
 #define farPin D7
 
-#define buttonAPin D4
-#define buttonBPin D3
-#define buttonCPin D2
-
 #define virtualDistancePin V0
 #define virtualLightLevelPin V1
 #define virtualIsInformationPin V2
@@ -28,22 +24,18 @@ pin_t pinsForLEDGroup[3] = {farPin, closePin, veryClosePin};
 LED lightsInLEDGroup[3];
 LEDGroup closeVeryCloseFar(lightsInLEDGroup);
 
-Button buttonA;
-Button buttonB;
-Button buttonC;
-
 int distanceCheck;
 
 int distance;
 int lightLevel;
 
+bool buttonCToggle;
+bool buttonBToggle;
+bool buttonAToggle;
+
 void setup()
 {
   closeVeryCloseFar.initialize(pinsForLEDGroup);
-
-  buttonA.initialize(buttonAPin);
-  buttonB.initialize(buttonBPin);
-  buttonC.initialize(buttonCPin);
 
   display.setup();
 
@@ -69,6 +61,7 @@ void setup()
 
 void loop()
 {
+  Blynk.run();
   display.setCursor(0, 0);
   update();
   display.loop();
@@ -77,13 +70,26 @@ void loop()
   lightLevel = distanceSensor.getAmbient();
   distance = distanceSensor.getProximity();
 
-  if (!buttonC.val)
+  if (display.pressedA())
+  {
+    buttonAToggle = !buttonAToggle;
+  }
+  if (display.pressedB())
+  {
+    buttonBToggle = !buttonBToggle;
+  }
+  if (display.pressedC())
+  {
+    buttonCToggle = !buttonCToggle;
+  }
+
+  if (buttonCToggle)
   {
     Blynk.virtualWrite(virtualDistancePin, distance);
     Blynk.virtualWrite(virtualLightLevelPin, lightLevel);
     Blynk.virtualWrite(virtualIsInformationPin, true);
-    buttonB.val = true;
-    buttonA.val = true;
+    buttonBToggle = false;
+    buttonAToggle = false;
     printMsgToOled("Information on Blynk app");
   }
   else
@@ -91,13 +97,13 @@ void loop()
     Blynk.virtualWrite(virtualIsInformationPin, false);
   }
 
-  if (!buttonB.val)
+  if (buttonBToggle)
   {
     printMsgToOled("Light Level:");
     printMsgToOled((String)lightLevel);
   }
 
-  if (!buttonA.val)
+  if (buttonAToggle)
   {
     printMsgToOled("Distance:");
     printMsgToOled((String)distance);
